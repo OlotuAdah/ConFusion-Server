@@ -12,7 +12,7 @@
     "express": "~4.16.0",
     "http-errors": "~1.6.2",
     "mongodb": "^4.5.0",
-    "mongoose": "^4.13.21",
+    "mongoose": "^5.1.7",
     "mongoose-currency": "^0.2.0",
     "morgan": "~1.9.0"
   }

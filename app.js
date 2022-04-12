@@ -18,7 +18,7 @@ const connect = mongoose.connect(uri);
 ////////
 connect.then(
   (db) => {
-    console.log("Connected correctly t server");
+    console.log("Connected correctly to server!");
   },
   (err) => console.log(err)
 );
