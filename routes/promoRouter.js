@@ -1,49 +1,61 @@
 const express = require("express");
+const Promotions = require("../models/promotions");
 
 const promoRouter = express.Router();
 promoRouter.use(express.json());
 
 promoRouter
   .route("/")
-  .all((req, res, next) => {
-    res.status(200).setHeader("Content-Type", "text/plain");
-    next();
-  })
-
   .get((req, res, next) => {
-    res.send("Will send all the promotions to you!");
+    Promotions.find({})
+      .then(
+        (promotions) => {
+          res.status(200);
+          if (promotions.length > 0) res.send(promotions);
+          else res.send("No promotions added, yet");
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   })
   .post((req, res, next) => {
-    res.send(
-      "Will add the promotions dish: " +
-        req.body.name +
-        " with details: " +
-        req.body.description
-    );
+    // console.log("Hitting /promotions");
+    Promotions.create(req.body)
+      .then(
+        (promotions) => {
+          res.status(201).send(promotions);
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   })
   .put((req, res, next) => {
     res.status(200).end("PUT operation not supported on /promotions");
   })
   .delete((req, res, next) => {
-    res.send("Deleting all promotion info");
+    Promotions.deleteMany()
+      .then(
+        (resp) => {
+          res.status(200).send(resp);
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   });
 
 //Route requests with dishId to this second part of the express router
 
 promoRouter
   .route("/:promoId")
-  .all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/plain");
-    next();
-  })
-
   .get((req, res, next) => {
-    res.send(
-      "Will send details of the promotion dish: " +
-        req.params.promoId +
-        " to you!"
-    );
+    Promotions.findById(req.params.promoId)
+      .then(
+        (promotion) => {
+          res.status(200).send(promotion);
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   })
 
   .post((req, res, next) => {
@@ -55,19 +67,35 @@ promoRouter
   })
 
   .put((req, res, next) => {
-    res.send(
-      "Updating the promotion dish: " +
-        req.params.promoId +
-        "\n" +
-        "Will update the promotion dish: " +
-        req.body.name +
-        " with details: " +
-        req.body.description
-    );
+    Promotions.findOneAndUpdate(
+      req.params.promoId,
+      { $set: req.body },
+      { new: true }
+    )
+      .then(
+        (promotions) => {
+          res
+            .status(200)
+            .setHeader("Content-Type", "application/json")
+            .json(promotions);
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   })
 
   .delete((req, res, next) => {
-    res.send("Deleting promotion dish: " + req.params.promoId);
+    Promotions.deleteOne({ _id: req.params.promoId })
+      .then(
+        () => {
+          res
+            .status(200)
+            .setHeader("Content-Type", "application/json")
+            .json(`Document with id: ${req.params.promoId} deleted!`);
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   });
 
 module.exports = promoRouter;
