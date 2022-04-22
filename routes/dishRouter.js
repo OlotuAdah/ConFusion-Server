@@ -1,5 +1,4 @@
 const expreess = require("express");
-// const mongoose = require("mongoose");
 const Dishes = require("../models/dishes");
 
 const dishRouter = expreess.Router();
@@ -119,9 +118,9 @@ dishRouter
               .setHeader("Content-Type", "application/json")
               .json(dish.comments);
           } else {
-            res.status(404).json(`Dish ${req.params.dishId} does not exist`);
-            // err.status = 404;
-            // return next(err);
+            let err = new Error(`Dish ${req.params.dishId} does not exist`);
+            err.status = 404;
+            return next(err);
           }
         },
         (err) => next(err)
@@ -142,7 +141,7 @@ dishRouter
                 .json(dish.comments);
             });
           } else {
-            err = new Error(`Dish ${req.params.dishId} does not exist`);
+            let err = new Error(`Dish ${req.params.dishId} does not exist`);
             err.status = 404;
             return next(err);
           }
@@ -179,7 +178,7 @@ dishRouter
                 });
             });
           } else {
-            err = new Error(`Dish ${req.params.dishId} does not exist`);
+            let err = new Error(`Dish ${req.params.dishId} does not exist`);
             err.status = 404;
             return next(err);
           }
@@ -206,13 +205,13 @@ dishRouter
               .setHeader("Content-Type", "application/json")
               .json(dish.comments.id(req.params.commentId));
           } else if (dish == null) {
-            err = new Error(
+            let err = new Error(
               `Dish with id: ${req.params.dishId} does not exist`
             );
             err.status = 404;
             return next(err);
           } else {
-            err = new Error(
+            let err = new Error(
               `Comment with id: ${req.params.dishId} does not exist`
             );
             err.status = 404;
@@ -249,13 +248,13 @@ dishRouter
               res.status(200).json(dish);
             });
           } else if (dish == null) {
-            err = new Error(
+            let err = new Error(
               `Dish with id: ${req.params.dishId} does not exist`
             );
             err.status = 404;
             return next(err);
           } else {
-            err = new Error(
+            let err = new Error(
               `Comment with id: ${req.params.dishId} does not exist`
             );
             err.status = 404;
@@ -283,13 +282,13 @@ dishRouter
                 });
             });
           } else if (dish == null) {
-            err = new Error(
+            let err = new Error(
               `Dish with id: ${req.params.dishId} does not exist`
             );
             err.status = 404;
             return next(err);
           } else {
-            err = new Error(
+            let err = new Error(
               `Comment with id: ${req.params.dishId} does not exist`
             );
             err.status = 404;
