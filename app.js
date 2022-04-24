@@ -1,7 +1,7 @@
-let createError = require("http-errors");
+const createError = require("http-errors");
 const express = require("express");
 const path = require("path");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 
 const indexRouter = require("./routes/index");
@@ -9,6 +9,8 @@ const dishRouter = require("./routes/dishRouter");
 const usersRouter = require("./routes/users");
 const promoRouter = require("./routes/promoRouter");
 const leaderRouter = require("./routes/leaderRouter");
+const session = require("express-session");
+const FileStore = require("session-file-store")(session);
 
 const mongoose = require("mongoose");
 const uri = "mongodb://localhost:27017/conFusion";
@@ -31,55 +33,40 @@ app.set("view engine", "ejs");
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser("12345-67890-12345-67890"));
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(cookieParser("12345-67890-12345-67890"));
+app.use(
+  session({
+    name: "session-id",
+    secret: "12345-67890-54321-67890", //uuid preferable
+    saveUninitialized: false,
+    resave: false,
+    store: new FileStore(),
+  })
+);
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
 
 //Authenticate b4 user interact with data
 function auth(req, res, next) {
-  if (!req.signedCookies.user) {
-    const authHeader = req.headers.authorization;
-    console.log(req);
-    if (!authHeader) {
-      let err = new Error("You're not authenticated!");
-      res.setHeader("www-Authenticate", "Basic");
-      err.status = 401;
-      return next(err);
-    }
-    let auth = new Buffer.from(authHeader.split(" ")[1], "base64");
-    auth = auth.toString().split(":"); //this line will return an array
-    const [username, password] = auth; // array unpacking
-    console.log(username + " " + password);
-    if (username === "admin" && password === "password") {
-      console.log(username, password);
-      res.cookie("user", "admin", { signed: true });
-      next(); //continue other middlewares on the stack
-    } else {
-      let err = new Error("You're not authenticated!");
-      res.setHeader("www-Authenticate", "Basic");
-      err.status = 401;
-      return next(err);
-    }
+  if (!req.session.user) {
+    let err = new Error("You're not authenticated..");
+    err.status = 401;
+    return next(err);
   } else {
-    // Cokie already exist and the user key is set on it
-    console.log(`Signed Cookie 2: ${req.signedCookies.user}`);
-    if (req.signedCookies.user === "admin") {
-      //cokie contaon valid info
+    if (req.session.user === "authenticated") {
       next();
     } else {
-      //cookie info is invalid
       let err = new Error("You're not authenticated!");
-      err.status = 401;
+      err.status = 403;
       return next(err);
     }
   }
 }
 
 app.use(auth);
-
 //Auth middleware ends
-app.use("/", indexRouter);
+
 app.use("/dishes", dishRouter);
-app.use("/users", usersRouter);
 app.use("/promotions", promoRouter);
 app.use("/leaders", leaderRouter);
 
