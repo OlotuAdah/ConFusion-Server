@@ -2,6 +2,7 @@ var express = require("express");
 const UserModel = require("../models/user");
 const userRouter = express.Router();
 const passport = require("passport");
+const authenticate = require("../authenticate");
 //////////////////////////////////
 
 userRouter.use(express.json());
@@ -28,10 +29,13 @@ userRouter.post("/signup", (req, res, next) => {
 });
 
 //login endpoint
-userRouter.post("/login", passport.authenticate("local"), (_, res) => {
+userRouter.post("/login", passport.authenticate("local"), (req, res) => {
+  //Note: req.user will be present after passport.authenticate() runs successfully
+  const token = authenticate.getToken({ _id: req.user._id });
   res.status(200).send({
     success: true,
-    status: "You're Successfully logged in !",
+    token: token,
+    status: "You're Successfully logged in!",
   });
 });
 
