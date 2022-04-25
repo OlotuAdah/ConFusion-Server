@@ -11,6 +11,9 @@ const promoRouter = require("./routes/promoRouter");
 const leaderRouter = require("./routes/leaderRouter");
 const session = require("express-session");
 const FileStore = require("session-file-store")(session);
+////////
+const passport = require("passport");
+const authenticate = require("./authenticate");
 
 const mongoose = require("mongoose");
 const uri = "mongodb://localhost:27017/conFusion";
@@ -43,29 +46,25 @@ app.use(
     store: new FileStore(),
   })
 );
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 
-//Authenticate b4 user interact with data
-function auth(req, res, next) {
-  if (!req.session.user) {
-    let err = new Error("You're not authenticated..");
-    err.status = 401;
+//Authenticate before user interact with other endpoints (data)
+function auth(req, _, next) {
+  //The res object is not needed in this block
+  if (!req.user) {
+    let err = new Error("You're not authenticated!");
+    err.status = 403;
     return next(err);
   } else {
-    if (req.session.user === "authenticated") {
-      next();
-    } else {
-      let err = new Error("You're not authenticated!");
-      err.status = 403;
-      return next(err);
-    }
+    next();
   }
 }
-
 app.use(auth);
-//Auth middleware ends
-
+//////////////////////////////////
 app.use("/dishes", dishRouter);
 app.use("/promotions", promoRouter);
 app.use("/leaders", leaderRouter);
