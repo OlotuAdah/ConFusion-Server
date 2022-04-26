@@ -9,6 +9,7 @@ dishRouter
   .route("/")
   .get((req, res, next) => {
     Dishes.find({})
+      .populate("comments.author")
       .then(
         (dishes) => {
           res
@@ -56,8 +57,10 @@ dishRouter
 
 dishRouter
   .route("/:dishId")
+
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           res
@@ -111,6 +114,7 @@ dishRouter
   .route("/:dishId/comments")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           if (dish !== null) {
@@ -133,14 +137,22 @@ dishRouter
       .then(
         (dish) => {
           if (dish != null) {
+            req.body.author = req.user._id;
             dish.comments.push(req.body);
-            console.log("Passed ===push");
-            dish.save().then((dish) => {
-              res
-                .status(200)
-                .setHeader("Content-Type", "application/json")
-                .json(dish.comments);
-            });
+            // console.log("Passed ===push");
+            dish.save().then(
+              (dish) => {
+                Dishes.findById(dish._id)
+                  //.populate("comments.author")
+                  .then((dish) => {
+                    res
+                      .status(200)
+                      .setHeader("Content-Type", "application/json")
+                      .json(dish);
+                  });
+              },
+              (err) => next(err)
+            );
           } else {
             let err = new Error(`Dish ${req.params.dishId} does not exist`);
             err.status = 404;
@@ -195,6 +207,7 @@ dishRouter
   .route("/:dishId/comments/:commentId")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           if (dish != null && dish.comments.id(req.params.commentId) != null) {
@@ -245,9 +258,16 @@ dishRouter
               dish.comments.id(req.params.commentId).commentText =
                 req.body.commentText;
             }
-            dish.save().then((dish) => {
-              res.status(200).json(dish);
-            });
+            dish.save().then(
+              (dish) => {
+                Dishes.findById(dish._id)
+                  .populate("comments.author")
+                  .then((dish) => {
+                    res.status(200).json(dish);
+                  });
+              },
+              (err) => next(err)
+            );
           } else if (dish == null) {
             let err = new Error(
               `Dish with id: ${req.params.dishId} does not exist`
@@ -274,12 +294,13 @@ dishRouter
             console.log("There are " + dish.comments.length + " on the dish");
             dish.comments.id(req.params.commentId).remove();
 
-            dish.save().then((resp) => {
-              res
-                .status(200)
-                .setHeader("Content-Type", "application/json")
-                .json({
-                  msg: `Comments Removed: There're ${dish.comments.length} comments`,
+            dish.save().then((dish) => {
+              Dishes.findById(dish._id)
+                .populate("comments.author")
+                .then((dish) => {
+                  res.status(200).json({
+                    msg: `Comments Removed: There're ${dish.comments.length} comments`,
+                  });
                 });
             });
           } else if (dish == null) {

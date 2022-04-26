@@ -28,9 +28,7 @@ exports.jwtpassport = passport.use(
   new JWTStrategy(opts, (jwt_payload, done) => {
     UserModel.findOne({ _id: jwt_payload._id })
       .then((user) => {
-        if (user) {
-          return done(null, user);
-        }
+        if (user) return done(null, user);
         return done(null, false);
       })
       .catch((err) => done(err, false));

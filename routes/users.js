@@ -13,16 +13,25 @@ userRouter.get("/", function (req, res, next) {
 });
 
 userRouter.post("/signup", (req, res, next) => {
-  const { username, password } = req.body;
+  const { username, password, firstname, lastname } = req.body;
   console.log(username + " " + password);
-  UserModel.register(new UserModel({ username }), password, (err, _) => {
+  //We want to ensure the user is successfully registered b4 saving firstname and lastname
+  UserModel.register(new UserModel({ username }), password, (err, user) => {
     if (err) {
       res.status(500).send({ err });
     }
-    passport.authenticate("local")(req, res, () => {
-      res.status(200).send({
-        success: true,
-        status: "Registeration Successful!",
+    if (firstname !== null) user.firstname = firstname;
+    if (lastname !== null) user.lastname = lastname;
+    //After these updates to the user object, we need to save the chages to mongo
+    user.save((err, user) => {
+      if (err) {
+        return res.status(500).send({ err });
+      }
+      passport.authenticate("local")(req, res, () => {
+        res.status(200).send({
+          success: true,
+          status: "Registeration Successful!",
+        });
       });
     });
   });
