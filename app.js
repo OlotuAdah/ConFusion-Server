@@ -28,6 +28,16 @@ connect.then(
 
 ///////
 const app = express();
+
+app.all("*", (req, res, next) => {
+  if (req.secure) return next(); //if req comes on secured port continue than the middleware stack
+  //this will run if req.secure is not set/or true
+  return res.redirect(
+    307,
+    `https://${req.hostname}:${app.get("secPort")}${req.url}`
+  );
+});
+
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.use(logger("dev"));
@@ -39,19 +49,6 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use(express.static(path.join(__dirname, "public")));
 
-//Authenticate before user interact with other endpoints (data)
-// function auth(req, _, next) {
-//   //The res object is not needed in this block
-//   if (!req.user) {
-//     let err = new Error("You're not authenticated!");
-//     err.status = 403;
-//     return next(err);
-//   } else {
-//     next();
-//   }
-// }
-// app.use(auth);
-//////////////////////////////////
 app.use("/dishes", dishRouter);
 app.use("/promotions", promoRouter);
 app.use("/leaders", leaderRouter);

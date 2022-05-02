@@ -17,6 +17,7 @@ passport.deserializeUser(UserModel.deserializeUser());
 exports.getToken = (user) => {
   const oneHour = 60 * 60; //3600
   return jwt.sign(user, config.secret, { expiresIn: oneHour });
+
   //Expires in 1 hour, after which the token needs to be renewed
 };
 
@@ -28,11 +29,23 @@ exports.jwtpassport = passport.use(
   new JWTStrategy(opts, (jwt_payload, done) => {
     UserModel.findOne({ _id: jwt_payload._id })
       .then((user) => {
-        if (user) return done(null, user);
+        if (user) {
+          return done(null, user);
+        }
         return done(null, false);
       })
       .catch((err) => done(err, false));
   })
 );
 
-exports.verifyUser = passport.authenticate("jwt", { session: false }); //jwy isn't creating session
+exports.verifyUser = passport.authenticate("jwt", { session: false }); //session:false means jwt isn't creating session
+
+exports.verifyAdmin = function (req, res, next) {
+  if (req.user.admin) {
+    next();
+  } else {
+    var err = new Error("You are not authorized");
+    err.status = 403;
+    return next(err);
+  }
+};

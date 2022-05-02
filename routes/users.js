@@ -8,9 +8,22 @@ const authenticate = require("../authenticate");
 userRouter.use(express.json());
 
 /* GET users listing. */
-userRouter.get("/", function (req, res, next) {
-  res.send("respond with a resource");
-});
+userRouter.get(
+  "/",
+  authenticate.verifyUser,
+  authenticate.verifyAdmin,
+  function (req, res, next) {
+    if (!req.user) return res.status(401).send("You're not Authenticated !");
+    UserModel.find({})
+      .then(
+        (users) => {
+          res.send(users);
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
+  }
+);
 
 userRouter.post("/signup", (req, res, next) => {
   const { username, password, firstname, lastname } = req.body;
@@ -18,10 +31,10 @@ userRouter.post("/signup", (req, res, next) => {
   //We want to ensure the user is successfully registered b4 saving firstname and lastname
   UserModel.register(new UserModel({ username }), password, (err, user) => {
     if (err) {
-      res.status(500).send({ err });
+      return res.status(500).send({ err });
     }
-    if (firstname !== null) user.firstname = firstname;
-    if (lastname !== null) user.lastname = lastname;
+    if (firstname) user.firstname = firstname;
+    if (lastname) user.lastname = lastname;
     //After these updates to the user object, we need to save the chages to mongo
     user.save((err, user) => {
       if (err) {

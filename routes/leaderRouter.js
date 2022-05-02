@@ -19,8 +19,7 @@ leaderRouter
       )
       .catch((err) => next(err));
   })
-  .post(authenticate.verifyUser, (req, res, next) => {
-    // console.log("Hitting /leaders");
+  .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.create(req.body)
       .then(
         (leaders) => {
@@ -30,19 +29,23 @@ leaderRouter
       )
       .catch((err) => next(err));
   })
-  .put(authenticate.verifyUser, (req, res, next) => {
+  .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.status(403).send("PUT operation not supported on /leaders");
   })
-  .delete(authenticate.verifyUser, (req, res, next) => {
-    Leaders.deleteMany()
-      .then(
-        (resp) => {
-          res.status(200).send(resp);
-        },
-        (err) => next(err)
-      )
-      .catch((err) => next(err));
-  });
+  .delete(
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Leaders.deleteMany()
+        .then(
+          (resp) => {
+            res.status(200).send(resp);
+          },
+          (err) => next(err)
+        )
+        .catch((err) => next(err));
+    }
+  );
 
 //Route requests with learderId to this second part of the express router
 
@@ -59,13 +62,13 @@ leaderRouter
       .catch((err) => next(err));
   })
 
-  .post(authenticate.verifyUser, (req, res, next) => {
+  .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res
       .status(403)
       .send("POST operation not supported on /leaders/" + req.params.leaderId);
   })
 
-  .put(authenticate.verifyUser, (req, res, next) => {
+  .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.findOneAndUpdate(
       req.params.leaderId,
       { $set: req.body },
@@ -83,18 +86,22 @@ leaderRouter
       .catch((err) => next(err));
   })
 
-  .delete(authenticate.verifyUser, (req, res, next) => {
-    Leaders.deleteOne({ _id: req.params.leaderId })
-      .then(
-        () => {
-          res
-            .status(200)
-            .setHeader("Content-Type", "application/json")
-            .json(`Leader with id: ${req.params.leaderId} deleted!`);
-        },
-        (err) => next(err)
-      )
-      .catch((err) => next(err));
-  });
+  .delete(
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Leaders.deleteOne({ _id: req.params.leaderId })
+        .then(
+          () => {
+            res
+              .status(200)
+              .setHeader("Content-Type", "application/json")
+              .json(`Leader with id: ${req.params.leaderId} deleted!`);
+          },
+          (err) => next(err)
+        )
+        .catch((err) => next(err));
+    }
+  );
 
 module.exports = leaderRouter;
